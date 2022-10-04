@@ -1,63 +1,111 @@
-import React from 'react';
-import Box from '@mui/material/Box';
-import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
+import React, {useState} from 'react';
+import { DataGrid, GridColDef, GridSelectionModel } from '@mui/x-data-grid';
+import { useGetData } from '../../custom-hooks';
+import { serverCalls } from '../../api';
+import { Button,Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle } from '@mui/material';
+import { SportForm } from '../../components/SportForm';
 
 const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 90 },
-    {
-      field: 'firstName',
-      headerName: 'First name',
-      width: 150,
-      editable: true,
-    },
-    {
-      field: 'lastName',
-      headerName: 'Last name',
-      width: 150,
-      editable: true,
-    },
-    {
-      field: 'age',
-      headerName: 'Age',
-      type: 'number',
-      width: 110,
-      editable: true,
-    },
-    {
-      field: 'fullName',
-      headerName: 'Full name',
-      description: 'This column has a value getter and is not sortable.',
-      sortable: false,
-      width: 160,
-      valueGetter: (params: GridValueGetterParams) =>
-        `${params.row.firstName || ''} ${params.row.lastName || ''}`,
-    },
-  ];
-  
-  const rows = [
-    { id: 1, lastName: 'Ronaldo', firstName: 'Cristiano', age: 37 },
-    { id: 2, lastName: 'Messi', firstName: 'Lionel', age: 35 },
-    { id: 3, lastName: 'Jr', firstName: 'Neymar', age: 30 },
-    { id: 4, lastName: 'Bale', firstName: 'Gareth', age: 33 },
-    { id: 5, lastName: 'Haaland', firstName: 'Erling', age: null },
-    { id: 6, lastName: 'Benzema', firstName: null, age: 34 },
-    { id: 7, lastName: 'Jr', firstName: 'Vinicius', age: 22 },
-    { id: 8, lastName: 'Kroos', firstName: 'Toni', age: 32 },
-    { id: 9, lastName: 'Modric', firstName: 'Luca', age: 37 },
+  { field: 'id', headerName: 'ID', width: 90 },
+  {
+    field: 'name',
+    headerName: 'Sport Name',
+    width: 90,
+    editable: true,
+  },
+  {
+    field: 'description',
+    headerName: 'Description',
+    width: 150,
+    editable: true,
+  },
+  {
+    field: 'price',
+    headerName: 'Price',
+    type: 'number',
+    width: 90,
+    editable: true,
+  },
+  {
+    field: 'max_spped',
+    headerName: 'Speed',
+    width: 90,
+    editable: true,
+  },
+  {
+    field: 'traits',
+    headerName: 'Traits',
+    width: 90,
+    editable: true,
+  },
+  {
+    field: 'height',
+    headerName: 'height',
+    width: 90,
+    editable: true,
+  },
+  {
+    field: 'weight',
+    headerName: 'Weight',
+    width: 90,
+    editable: true,
+  },
 ];
 
+interface gridData{
+  data:{
+    id?:string;
+  }
+}
+
 export const DataTable = () => {
+    let { sportData, getData } = useGetData()
+    let [open, setOpen] = useState(false);
+    let [gridData, setData] = useState<GridSelectionModel>([])
+
+    let handleOpen = () => {
+        setOpen(true)
+    }
+  
+    let handleClose = () => {
+        setOpen(false)
+    }
+  
+    let deleteData = () => {
+        serverCalls.delete(`${gridData[0]}`)
+        getData()
+    }
+
+    console.log(gridData)
     return (
       <div style={{ height: 400, width: '100%' }}>
-          <h2>Sports In Our Collection</h2>
+        <h2>Sports In Our Collection</h2>
         <DataGrid
-          rows={rows}
-          columns={columns}
-          pageSize={9}
-          rowsPerPageOptions={[9]}
-          checkboxSelection
-          disableSelectionOnClick
-        />
+            rows={sportData}
+            columns={columns}
+            pageSize={9}
+            rowsPerPageOptions={[9]}
+            checkboxSelection
+            onSelectionModelChange = {(newSelectionModel) => {setData(newSelectionModel);}}
+            {...sportData}  
+				/>
+        <Button onClick={handleOpen}>Update</Button>
+        <Button variant="contained" color="secondary" onClick={deleteData}>Delete</Button>
+        <Dialog open={open} onClose={handleClose} aria-labelledby="form-dialog-title">
+            <DialogTitle id="form-dialog-title">Update A Athlete</DialogTitle>
+            <DialogContent>
+              <DialogContentText>Sport id: {gridData[0]}</DialogContentText>
+              <SportForm id={`${gridData[0]}`}/>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick = {handleClose} color="primary">Cancel</Button>
+              <Button onClick={handleClose} color = "primary">Done</Button> 
+            </DialogActions>
+        </Dialog>
       </div>
-    );
-  }
+      );
+}
